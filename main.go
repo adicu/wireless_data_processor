@@ -7,9 +7,14 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 
 	"github.com/howeyc/fsnotify"
 	_ "github.com/lib/pq"
+)
+
+var (
+	filenameRegex = regexp.MustCompile(`\d{4}(-\d{2}){4}.json`)
 )
 
 // getOrElse checks the specified environment variable, returns the value if found, otherwise
@@ -18,7 +23,7 @@ func getOrElse(key, standard string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
 	} else if standard == "" {
-		log.Fatalf("The environment variable, {}, must be set", key)
+		log.Fatalf("The environment variable, %s, must be set", key)
 	}
 	return standard
 }
@@ -56,7 +61,7 @@ func handleFile(filename string, db *sql.DB) {
 	}
 
 	if err = dataset(data).insert(db); err != nil {
-		log.Printf("Failed to insert data from, %s =>", filename, err.Error())
+		log.Printf("Failed to insert data from, %s => %s", filename, err.Error())
 	}
 }
 
@@ -93,7 +98,7 @@ func main() {
 			select {
 			case event := <-watcher.Event:
 				log.Println(event)
-				if event.IsCreate() {
+				if event.IsCreate() && filenameRegex.MatchString(event.Name) {
 					handleFile(event.Name, db)
 				}
 			case err := <-watcher.Error:

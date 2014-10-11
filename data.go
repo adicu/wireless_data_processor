@@ -31,7 +31,7 @@ func parseData(datafile []byte) ([]dumpFormat, error) {
 	for id, d := range parsed {
 		var parsedInt int64
 		if parsedInt, err = strconv.ParseInt(id, 10, 64); err != nil {
-			log.Print("Failed to parse int, => %s", id)
+			log.Printf("Failed to parse int, => %s", id)
 			continue
 		}
 
@@ -72,7 +72,7 @@ func (data dataset) insert(db *sql.DB) error {
 	}
 
 	if err = txn.Commit(); err != nil {
-		log.Fatal("Failed to commit txn => %s", err.Error())
+		log.Fatalf("Failed to commit txn => %s", err.Error())
 	}
 	return nil
 }
