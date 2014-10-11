@@ -60,13 +60,13 @@ func TestParseData(t *testing.T) {
 
 	// n^2 because n == 4....
 	for _, d := range data {
-		go func(t *testing.T) {
+		go func(d dumpFormat, t *testing.T) {
 			for _, e := range expectedData {
 				if d == e {
 					return
 				}
 			}
 			t.Errorf("No match in expected data for %#v\n", d)
-		}(t)
+		}(d, t)
 	}
 }
