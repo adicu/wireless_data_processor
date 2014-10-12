@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -13,13 +14,14 @@ import (
 // dumpFormat represents the datapoints provided for the wireless data.
 type dumpFormat struct {
 	ID          int
+	DumpTime    time.Time
 	Name        string `json:"name"`
 	ClientCount int    `json:"client_count"`
 	ParentID    int    `json:"parent_id"`
 }
 
 // parseData unmarshals a byte array into an array of wireless data dumps.
-func parseData(datafile []byte) ([]dumpFormat, error) {
+func parseData(timestamp time.Time, datafile []byte) ([]dumpFormat, error) {
 	var parsed map[string]dumpFormat = make(map[string]dumpFormat)
 	err := json.Unmarshal(datafile, &parsed)
 	if err != nil {
@@ -36,6 +38,7 @@ func parseData(datafile []byte) ([]dumpFormat, error) {
 		}
 
 		d.ID = int(parsedInt)
+		d.DumpTime = timestamp
 		data[i] = d
 		i++
 	}

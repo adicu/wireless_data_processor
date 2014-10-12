@@ -8,14 +8,21 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/howeyc/fsnotify"
 	_ "github.com/lib/pq"
 )
 
 var (
-	filenameRegex = regexp.MustCompile(`\d{4}(-\d{2}){4}.json`)
+	filenameRegex  = regexp.MustCompile(`(\d{4}(-\d{2}){4}).json`)
+	datetimeRegex  = regexp.MustCompile(`([\d-]*)`)
+	datetimeFormat = "2006-01-02-15-04"
 )
+
+func getDate(s string) (time.Time, error) {
+	return time.Parse(datetimeFormat, datetimeRegex.FindString(s))
+}
 
 // getOrElse checks the specified environment variable, returns the value if found, otherwise
 // will return the default value provided. If there is no default then makes a fatal log.
@@ -55,7 +62,12 @@ func handleFile(filename string, db *sql.DB) {
 		log.Fatalf("Failed to read in file => %s", err.Error())
 	}
 
-	data, err := parseData(fileContents)
+	tm, err := getDate(filename)
+	if err != nil {
+		log.Printf("Failed to parse date from, %s => %s", filename, err.Error())
+	}
+
+	data, err := parseData(tm, fileContents)
 	if err != nil {
 		log.Fatal(err)
 	}

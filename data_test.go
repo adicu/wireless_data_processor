@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 var testingData string = `{
   "152" : {
@@ -53,7 +56,7 @@ var expectedData []dumpFormat = []dumpFormat{
 }
 
 func TestParseData(t *testing.T) {
-	data, err := parseData([]byte(testingData))
+	data, err := parseData(time.Time{}, []byte(testingData))
 	if err != nil {
 		t.Fatal(err)
 	}
