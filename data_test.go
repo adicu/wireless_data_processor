@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var testingData string = `{
+var testingData = `{
   "152" : {
     "name" : "Lerner 3",
     "client_count" : 70,
@@ -28,7 +28,7 @@ var testingData string = `{
   }
 }`
 
-var expectedData []dumpFormat = []dumpFormat{
+var expectedData = []dumpFormat{
 	{
 		GroupID:     152,
 		GroupName:   "Lerner 3",
