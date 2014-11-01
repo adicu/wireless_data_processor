@@ -48,8 +48,8 @@ func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
 	}
 
 	var (
-		data   []dumpFormat = make([]dumpFormat, len(parsed))
-		i      int          = 0
+		data   = make([]dumpFormat, len(parsed))
+		i      int
 		err    error
 		exists bool
 	)

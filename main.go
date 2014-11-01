@@ -148,7 +148,7 @@ func main() {
 
 	// start the file system watcher
 	if err = watcher.Watch(*watchDir); err != nil {
-		log.Fatalf("Failed to start watching directory, %s => %s", watchDir, err.Error())
+		log.Fatalf("Failed to start watching directory, %s => %s", *watchDir, err.Error())
 	}
 
 	// wait for any new files to be added, then process them
