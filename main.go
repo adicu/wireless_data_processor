@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"regexp"
 	"time"
 
@@ -15,13 +16,13 @@ import (
 )
 
 var (
-	filenameRegex  = regexp.MustCompile(`(\d{4}(-\d{2}){4}).json`)
+	filenameRegex  = regexp.MustCompile(`(\d{4}(-\d{2}){4})\.json$`)
 	datetimeRegex  = regexp.MustCompile(`([\d-]*)`)
 	datetimeFormat = "2006-01-02-15-04"
 )
 
 func getDate(s string) (time.Time, error) {
-	return time.Parse(datetimeFormat, datetimeRegex.FindString(s))
+	return time.Parse(datetimeFormat, datetimeRegex.FindString(path.Base(s)))
 }
 
 // getOrElse checks the specified environment variable, returns the value if found, otherwise
@@ -39,12 +40,13 @@ func getOrElse(key, standard string) string {
 // connection
 func dbConnect() *sql.DB {
 	db, err := sql.Open("postgres",
-		fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s",
+		fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s",
 			getOrElse("PG_USER", "adicu"),
-			getOrElse("PG_DB", ""),
 			getOrElse("PG_PASSWORD", ""),
+			getOrElse("PG_DB", ""),
 			getOrElse("PG_HOST", "localhost"),
 			getOrElse("PG_PORT", "5432"),
+			getOrElse("PG_SSL", "disable"),
 		))
 	if err != nil {
 		log.Fatalf("Error connecting to Postgres => %s", err.Error())
@@ -65,6 +67,7 @@ func handleFile(filename string, db *sql.DB) {
 	tm, err := getDate(filename)
 	if err != nil {
 		log.Printf("Failed to parse date from, %s => %s", filename, err.Error())
+		return
 	}
 
 	data, err := parseData(tm, fileContents)
@@ -79,9 +82,14 @@ func handleFile(filename string, db *sql.DB) {
 
 func main() {
 	db := dbConnect()
-	watchDir := flag.String("dir", ".", "directory to watch for new files")
+	defer db.Close()
 
+	watchDir := flag.String("dir", ".", "directory to watch for new files")
 	loadAll := flag.Bool("all", false, "load all dump file in the directory")
+	keepWatching := flag.Bool("watch", true, "continue to watch for new files in the directory")
+
+	flag.Parse()
+
 	if *loadAll {
 		log.Printf("Loading all files in directory, %s", watchDir)
 
@@ -91,17 +99,13 @@ func main() {
 		}
 
 		for _, f := range files {
-			handleFile(f.Name(), db)
+			handleFile(*watchDir+f.Name(), db)
 		}
 	}
 
-	keepWatching := flag.Bool("watch", true, "continue to watch for new files in the directory")
 	if !*keepWatching {
 		log.Println("Not watching for files as specified")
 	}
-
-	flag.Parse()
-	log.Println(*watchDir)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

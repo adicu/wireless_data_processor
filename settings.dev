@@ -1,9 +1,9 @@
 #!bin/sh
 
 # Postgres connection
+export PG_DB=density
 export PG_USER=adicu
 export PG_PASSWORD=adicu
-export PG_DB=density
 export PG_HOST=localhost
 export PG_PORT=5432
 

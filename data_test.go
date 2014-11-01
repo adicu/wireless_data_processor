@@ -30,28 +30,32 @@ var testingData string = `{
 
 var expectedData []dumpFormat = []dumpFormat{
 	{
-		ID:          152,
-		Name:        "Lerner 3",
+		GroupID:     152,
+		GroupName:   "Lerner 3",
 		ClientCount: 70,
 		ParentID:    84,
+		ParentName:  "Lerner",
 	},
 	{
-		ID:          131,
-		Name:        "Butler Library 3",
+		GroupID:     131,
+		GroupName:   "Butler Library 3",
 		ClientCount: 328,
 		ParentID:    103,
+		ParentName:  "Butler",
 	},
 	{
-		ID:          155,
-		Name:        "JJ's Place",
+		GroupID:     155,
+		GroupName:   "JJ's Place",
 		ClientCount: 90,
 		ParentID:    75,
+		ParentName:  "John Jay",
 	},
 	{
-		ID:          130,
-		Name:        "Butler Library 2",
+		GroupID:     130,
+		GroupName:   "Butler Library 2",
 		ClientCount: 412,
 		ParentID:    103,
+		ParentName:  "Butler",
 	},
 }
 
