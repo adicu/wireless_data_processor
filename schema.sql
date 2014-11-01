@@ -18,14 +18,14 @@ CREATE INDEX ON density_data (parent_id);
 
 CREATE MATERIALIZED VIEW hour_window AS (
     SELECT
-        date_trunc('hour', dump_time),
+        date_trunc('hour', dump_time) AS hour,
         group_id,
         group_name,
         parent_id,
         parent_name,
-        AVG(client_count) as average_count,
-        MAX(client_count) as max_count,
-        MIN(client_count) as min_count
+        AVG(client_count) AS average_count,
+        MAX(client_count) AS max_count,
+        MIN(client_count) AS min_count
     FROM
         density_data
     GROUP BY
@@ -37,14 +37,14 @@ CREATE MATERIALIZED VIEW hour_window AS (
 );
 CREATE MATERIALIZED VIEW day_window AS (
     SELECT
-        date_trunc('day', dump_time),
+        date_trunc('day', dump_time) AS day,
         group_id,
         group_name,
         parent_id,
         parent_name,
-        AVG(client_count) as average_count,
-        MAX(client_count) as max_count,
-        MIN(client_count) as min_count
+        AVG(client_count) AS average_count,
+        MAX(client_count) AS max_count,
+        MIN(client_count) AS min_count
     FROM
         density_data
     GROUP BY
@@ -57,14 +57,14 @@ CREATE MATERIALIZED VIEW day_window AS (
 
 CREATE MATERIALIZED VIEW week_window AS (
     SELECT
-        date_trunc('week', dump_time),
+        date_trunc('week', dump_time) AS week,
         group_id,
         group_name,
         parent_id,
         parent_name,
-        AVG(client_count) as average_count,
-        MAX(client_count) as max_count,
-        MIN(client_count) as min_count
+        AVG(client_count) AS average_count,
+        MAX(client_count) AS max_count,
+        MIN(client_count) AS min_count
     FROM
         density_data
     GROUP BY
@@ -77,14 +77,14 @@ CREATE MATERIALIZED VIEW week_window AS (
 
 CREATE MATERIALIZED VIEW month_window AS (
     SELECT
-        date_trunc('month', dump_time),
+        date_trunc('month', dump_time) AS month,
         group_id,
         group_name,
         parent_id,
         parent_name,
-        AVG(client_count) as average_count,
-        MAX(client_count) as max_count,
-        MIN(client_count) as min_count
+        AVG(client_count) AS average_count,
+        MAX(client_count) AS max_count,
+        MIN(client_count) AS min_count
     FROM
         density_data
     GROUP BY
