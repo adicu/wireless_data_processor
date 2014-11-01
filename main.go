@@ -16,9 +16,15 @@ import (
 )
 
 var (
-	filenameRegex  = regexp.MustCompile(`(\d{4}(-\d{2}){4})\.json$`)
-	datetimeRegex  = regexp.MustCompile(`([\d-]*)`)
-	datetimeFormat = "2006-01-02-15-04"
+	filenameRegex     = regexp.MustCompile(`(\d{4}(-\d{2}){4})\.json$`)
+	datetimeRegex     = regexp.MustCompile(`([\d-]*)`)
+	datetimeFormat    = "2006-01-02-15-04"
+	materializedViews = []string{
+		"hour_window",
+		"day_window",
+		"week_window",
+		"month_window",
+	}
 )
 
 func getDate(s string) (time.Time, error) {
@@ -66,7 +72,7 @@ func handleFile(filename string, db *sql.DB) {
 
 	tm, err := getDate(filename)
 	if err != nil {
-		log.Printf("Failed to parse date from, %s => %s", filename, err.Error())
+		log.Printf("Failed to parse date from filename, %s => %s", filename, err.Error())
 		return
 	}
 
@@ -77,6 +83,26 @@ func handleFile(filename string, db *sql.DB) {
 
 	if err = dataset(data).insert(db); err != nil {
 		log.Printf("Failed to insert data from, %s => %s", filename, err.Error())
+		return
+	}
+}
+
+// Update the materialized views listed in `materializedViews`
+func updateViews(db *sql.DB) {
+	txn, err := db.Begin()
+	if err != nil {
+		log.Printf("ERR: failed to start pq txn for materialized view updates => %s", err.Error())
+		return
+	}
+
+	for _, view := range materializedViews {
+		if _, err = txn.Exec(fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)); err != nil {
+			log.Printf("Failed to update materialized view, %s => %s", view, err.Error())
+		}
+	}
+
+	if nil == txn.Commit() {
+		log.Println("materialized views updated")
 	}
 }
 
@@ -91,7 +117,7 @@ func main() {
 	flag.Parse()
 
 	if *loadAll {
-		log.Printf("Loading all files in directory, %s", watchDir)
+		log.Printf("Loading all files in directory, %s", *watchDir)
 
 		files, err := ioutil.ReadDir(*watchDir)
 		if err != nil {
@@ -101,6 +127,7 @@ func main() {
 		for _, f := range files {
 			handleFile(*watchDir+f.Name(), db)
 		}
+		updateViews(db)
 	}
 
 	if !*keepWatching {
@@ -121,6 +148,7 @@ func main() {
 				log.Println(event)
 				if event.IsCreate() && filenameRegex.MatchString(event.Name) {
 					handleFile(event.Name, db)
+					updateViews(db)
 				}
 			case err := <-watcher.Error:
 				log.Println(err)
