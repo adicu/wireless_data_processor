@@ -79,12 +79,13 @@ func handleFile(filename string, db *sql.DB) {
 
 func main() {
 	db := dbConnect()
-	watchDir := *flag.String("dir", ".", "directory to watch for new files")
+	watchDir := flag.String("dir", ".", "directory to watch for new files")
 
-	if *flag.Bool("all", false, "load all dump file in the directory") {
+	loadAll := flag.Bool("all", false, "load all dump file in the directory")
+	if *loadAll {
 		log.Printf("Loading all files in directory, %s", watchDir)
 
-		files, err := ioutil.ReadDir(watchDir)
+		files, err := ioutil.ReadDir(*watchDir)
 		if err != nil {
 			log.Fatalf("Failed to read in directory info => %s", err.Error())
 		}
@@ -94,9 +95,13 @@ func main() {
 		}
 	}
 
-	if !*flag.Bool("watch", true, "continue to watch for new files in the directory") {
+	keepWatching := flag.Bool("watch", true, "continue to watch for new files in the directory")
+	if !*keepWatching {
 		log.Println("Not watching for files as specified")
 	}
+
+	flag.Parse()
+	log.Println(*watchDir)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -119,7 +124,7 @@ func main() {
 		}
 	}()
 
-	if err = watcher.Watch(watchDir); err != nil {
+	if err = watcher.Watch(*watchDir); err != nil {
 		log.Fatalf("Failed to start watching directory, %s => %s", watchDir, err.Error())
 	}
 
