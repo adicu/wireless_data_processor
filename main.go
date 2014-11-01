@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/howeyc/fsnotify"
@@ -65,7 +66,7 @@ func dbConnect() *sql.DB {
 // handleFile processes new files
 //
 // The file is read into memory, parsed then inserted to the database.
-func handleFile(filename string, db *sql.DB) {
+func handleFile(wg *sync.WaitGroup, filename string, db *sql.DB) {
 	log.Printf("Processing, %s", filename)
 	fileContents, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -75,6 +76,7 @@ func handleFile(filename string, db *sql.DB) {
 	tm, err := getDate(filename)
 	if err != nil {
 		log.Printf("Failed to parse date from file, %s, ignored.", filename)
+		wg.Done()
 		return
 	}
 
@@ -86,6 +88,7 @@ func handleFile(filename string, db *sql.DB) {
 	if err = dataset(data).insert(db); err != nil {
 		log.Printf("Failed to insert data from, %s => %s", filename, err.Error())
 	}
+	wg.Done()
 }
 
 // Update the materialized views listed in `materializedViews`
@@ -112,6 +115,7 @@ func main() {
 		watchDir     = flag.String("dir", ".", "directory to watch for new files")
 		loadAll      = flag.Bool("all", false, "load all dump file in the directory")
 		keepWatching = flag.Bool("watch", true, "continue to watch for new files in the directory")
+		wg           = &sync.WaitGroup{}
 	)
 	flag.Parse()
 
@@ -128,8 +132,10 @@ func main() {
 
 		// handle every data file
 		for _, f := range files {
-			handleFile(*watchDir+f.Name(), db)
+			wg.Add(1)
+			go handleFile(wg, path.Join(*watchDir, f.Name()), db)
 		}
+		wg.Wait()
 		updateViews(db) // refresh the materialized views afterwards
 	}
 
@@ -156,7 +162,8 @@ func main() {
 		select {
 		case event := <-watcher.Event:
 			if event.IsCreate() && filenameRegex.MatchString(event.Name) {
-				handleFile(event.Name, db)
+				handleFile(wg, event.Name, db)
+
 				updateViews(db)
 			}
 		case err := <-watcher.Error:
