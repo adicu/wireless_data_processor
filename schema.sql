@@ -18,6 +18,7 @@ CREATE INDEX ON density_data (parent_id);
 
 CREATE MATERIALIZED VIEW hour_window AS (
     SELECT
+        date_trunc('hour', dump_time),
         group_id,
         group_name,
         parent_id,
@@ -36,6 +37,7 @@ CREATE MATERIALIZED VIEW hour_window AS (
 );
 CREATE MATERIALIZED VIEW day_window AS (
     SELECT
+        date_trunc('day', dump_time),
         group_id,
         group_name,
         parent_id,
@@ -55,6 +57,7 @@ CREATE MATERIALIZED VIEW day_window AS (
 
 CREATE MATERIALIZED VIEW week_window AS (
     SELECT
+        date_trunc('week', dump_time),
         group_id,
         group_name,
         parent_id,
@@ -74,6 +77,7 @@ CREATE MATERIALIZED VIEW week_window AS (
 
 CREATE MATERIALIZED VIEW month_window AS (
     SELECT
+        date_trunc('month', dump_time),
         group_id,
         group_name,
         parent_id,
