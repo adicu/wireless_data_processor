@@ -11,6 +11,7 @@ import (
 	"github.com/lib/pq"
 )
 
+// lookup table for buildings that we have in our system.
 var parentNameLookup = map[int]string{
 	146: "Avery",
 	103: "Butler",
@@ -36,29 +37,33 @@ type dumpFormat struct {
 type dataset []dumpFormat
 
 // parseData unmarshals a byte array into an array of wireless data dumps.
+//
+// This is a little more complicated because the group ID is stored as the key to the
+// remainder of the data for the record.
 func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
-	var parsed map[string]dumpFormat = make(map[string]dumpFormat)
-	err := json.Unmarshal(datafile, &parsed)
-	if err != nil {
+	// marshal what data we can from the json
+	parsed := make(map[string]dumpFormat)
+	if err := json.Unmarshal(datafile, &parsed); err != nil {
 		return []dumpFormat{}, fmt.Errorf("Error parsing bytes => %s", err.Error())
 	}
 
-	var data []dumpFormat = make([]dumpFormat, len(parsed))
-	var i int = 0
+	var (
+		data   []dumpFormat = make([]dumpFormat, len(parsed))
+		i      int          = 0
+		err    error
+		exists bool
+	)
+	// fill out the JSON with the group ID added
 	for id, d := range parsed {
 		var parsedInt int64
 		if parsedInt, err = strconv.ParseInt(id, 10, 64); err != nil {
-			log.Printf("Failed to parse int, => %s", id)
-			continue
+			log.Fatalf("Failed to parse int, %s => %s", id, err.Error())
 		}
 
 		d.GroupID = int(parsedInt)
 		d.DumpTime = timestamp
-
-		var exists bool
-		d.ParentName, exists = parentNameLookup[d.ParentID]
-		if !exists {
-			log.Printf("WARN: no parent name for %d exists", d.ParentID)
+		if d.ParentName, exists = parentNameLookup[d.ParentID]; !exists {
+			log.Printf("WARN: no parent name for %d exists in group: %d", d.ParentID, d.GroupID)
 		}
 		data[i] = d
 		i++
@@ -75,6 +80,7 @@ func (data dataset) insert(db *sql.DB) error {
 		return fmt.Errorf("Error starting PG txn => %s", err.Error())
 	}
 
+	// CopyIn used for fast insertions. Table followed by columns
 	stmt, err := txn.Prepare(pq.CopyIn(
 		"density_data",
 		"dump_time",

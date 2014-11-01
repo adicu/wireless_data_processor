@@ -27,6 +27,8 @@ var (
 	}
 )
 
+// getDate parses a filepath to get a date from the filename given the regex
+// declared in `filenameRegex`.
 func getDate(s string) (time.Time, error) {
 	return time.Parse(datetimeFormat, datetimeRegex.FindString(path.Base(s)))
 }
@@ -72,7 +74,7 @@ func handleFile(filename string, db *sql.DB) {
 
 	tm, err := getDate(filename)
 	if err != nil {
-		log.Printf("Failed to parse date from filename, %s => %s", filename, err.Error())
+		log.Printf("Failed to parse date from file, %s, ignored.", filename)
 		return
 	}
 
@@ -83,7 +85,6 @@ func handleFile(filename string, db *sql.DB) {
 
 	if err = dataset(data).insert(db); err != nil {
 		log.Printf("Failed to insert data from, %s => %s", filename, err.Error())
-		return
 	}
 }
 
@@ -107,58 +108,59 @@ func updateViews(db *sql.DB) {
 }
 
 func main() {
+	var (
+		watchDir     = flag.String("dir", ".", "directory to watch for new files")
+		loadAll      = flag.Bool("all", false, "load all dump file in the directory")
+		keepWatching = flag.Bool("watch", true, "continue to watch for new files in the directory")
+	)
+	flag.Parse()
+
 	db := dbConnect()
 	defer db.Close()
 
-	watchDir := flag.String("dir", ".", "directory to watch for new files")
-	loadAll := flag.Bool("all", false, "load all dump file in the directory")
-	keepWatching := flag.Bool("watch", true, "continue to watch for new files in the directory")
-
-	flag.Parse()
-
+	// if all the files currently in the directory should be loaded
 	if *loadAll {
 		log.Printf("Loading all files in directory, %s", *watchDir)
-
 		files, err := ioutil.ReadDir(*watchDir)
 		if err != nil {
 			log.Fatalf("Failed to read in directory info => %s", err.Error())
 		}
 
+		// handle every data file
 		for _, f := range files {
 			handleFile(*watchDir+f.Name(), db)
 		}
-		updateViews(db)
+		updateViews(db) // refresh the materialized views afterwards
 	}
 
+	// exits if flag turned on
 	if !*keepWatching {
 		log.Println("Not watching for files as specified")
+		return
 	}
 
+	// start watching for new files
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal("Failed to instantiate file watcher")
 	}
 	defer watcher.Close()
 
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Event:
-				log.Println(event)
-				if event.IsCreate() && filenameRegex.MatchString(event.Name) {
-					handleFile(event.Name, db)
-					updateViews(db)
-				}
-			case err := <-watcher.Error:
-				log.Println(err)
-			}
-		}
-	}()
-
+	// start the file system watcher
 	if err = watcher.Watch(*watchDir); err != nil {
 		log.Fatalf("Failed to start watching directory, %s => %s", watchDir, err.Error())
 	}
 
-	<-done
+	// wait for any new files to be added, then process them
+	for {
+		select {
+		case event := <-watcher.Event:
+			if event.IsCreate() && filenameRegex.MatchString(event.Name) {
+				handleFile(event.Name, db)
+				updateViews(db)
+			}
+		case err := <-watcher.Error:
+			log.Println(err)
+		}
+	}
 }
