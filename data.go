@@ -76,6 +76,7 @@ func (data dataset) insert(db *sql.DB) error {
 	}
 
 	stmt, err := txn.Prepare(pq.CopyIn(
+		"density_data",
 		"dump_time",
 		"group_id",
 		"group_name",
