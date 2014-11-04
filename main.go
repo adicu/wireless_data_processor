@@ -158,6 +158,7 @@ func main() {
 		select {
 		case event := <-watcher.Event:
 			if event.IsCreate() && filenameRegex.MatchString(event.Name) {
+				time.Sleep(time.Duration(2 * time.Second))
 				handleFile(event.Name, db)
 				updateViews(db)
 			}
