@@ -70,7 +70,8 @@ func handleFile(filename string, db *sql.DB) {
 	log.Printf("Processing, %s", filename)
 	fileContents, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Fatalf("Failed to read in file => %s", err.Error())
+		log.Printf("Failed to read in file, %s => %s", filename, err.Error())
+		return
 	}
 
 	tm, err := getDate(filename)
@@ -81,7 +82,8 @@ func handleFile(filename string, db *sql.DB) {
 
 	data, err := parseData(tm, fileContents)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to parse data from %s => %s", filename, err.Error())
+		return
 	}
 
 	if err = dataset(data).insert(db); err != nil {

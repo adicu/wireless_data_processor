@@ -57,7 +57,7 @@ func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
 	for id, d := range parsed {
 		var parsedInt int64
 		if parsedInt, err = strconv.ParseInt(id, 10, 64); err != nil {
-			log.Fatalf("Failed to parse int, %s => %s", id, err.Error())
+			return []dumpFormat{}, fmt.Errorf("ERR: Failed to parse int, %s => %s", id, err.Error())
 		}
 
 		d.GroupID = int(parsedInt)
@@ -114,7 +114,7 @@ func (data dataset) insert(db *sql.DB) error {
 	}
 
 	if err = txn.Commit(); err != nil {
-		log.Fatalf("Failed to commit txn => %s", err.Error())
+		log.Printf("ERR: Failed to commit txn => %s", err.Error())
 	}
 	return nil
 }
