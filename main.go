@@ -25,14 +25,18 @@ var (
 		"week_window",
 		"month_window",
 	}
-	maxHandlesNum = 100
-	PG_USER       = getOrElse("PG_USER", "adicu")
-	PG_PASSWORD   = getOrElse("PG_PASSWORD", "")
-	PG_DB         = getOrElse("PG_DB", "")
-	PG_HOST       = getOrElse("PG_HOST", "localhost")
-	PG_PORT       = getOrElse("PG_PORT", "5432")
-	PG_SSL        = getOrElse("PG_SSL", "disable")
+	maxHandlesNum                                         = 100
+	PG_USER, PG_PASSWORD, PG_DB, PG_HOST, PG_PORT, PG_SSL string
 )
+
+func refreshDBCredentials() {
+	PG_USER = getOrElse("PG_USER", "adicu")
+	PG_PASSWORD = getOrElse("PG_PASSWORD", "")
+	PG_DB = getOrElse("PG_DB", "")
+	PG_HOST = getOrElse("PG_HOST", "localhost")
+	PG_PORT = getOrElse("PG_PORT", "5432")
+	PG_SSL = getOrElse("PG_SSL", "disable")
+}
 
 // getDate parses a filepath to get a date from the filename given the regex
 // declared in `filenameRegex`.
@@ -54,6 +58,10 @@ func getOrElse(key, standard string) string {
 // dbConnect yanks db configurations from the environment variables and returns a postgres
 // connection
 func dbConnect() *sql.DB {
+	if PG_USER == "" {
+		refreshDBCredentials()
+	}
+
 	db, err := sql.Open("postgres",
 		fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s",
 			PG_USER,

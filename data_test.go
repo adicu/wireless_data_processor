@@ -1,9 +1,19 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
 )
+
+func init() {
+	os.Setenv("PG_USER", "adicu")
+	os.Setenv("PG_PASSWORD", "adicu")
+	os.Setenv("PG_DB", "density")
+	os.Setenv("PG_HOST", "localhost")
+	os.Setenv("PG_PORT", "5432")
+	os.Setenv("PG_SSL", "disable")
+}
 
 var testingData = `{
   "152" : {
