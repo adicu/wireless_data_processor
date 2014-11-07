@@ -115,6 +115,9 @@ func (data dataset) insert(db *sql.DB) error {
 
 	if err = txn.Commit(); err != nil {
 		log.Printf("ERR: Failed to commit txn => %s", err.Error())
+		if err = txn.Rollback(); err != nil {
+			log.Printf("ERR: Failed to rollback txn => %s", err.Error())
+		}
 	}
 	return nil
 }
