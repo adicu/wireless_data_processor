@@ -74,7 +74,7 @@ func dbConnect() *sql.DB {
 	if err != nil {
 		log.Fatalf("Error connecting to Postgres => %s", err.Error())
 	}
-	log.Printf("Databse connection made to %s", PG_DB)
+	log.Printf("PQ Database connection made to %s", PG_DB)
 	return db
 }
 
