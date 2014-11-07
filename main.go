@@ -26,6 +26,12 @@ var (
 		"month_window",
 	}
 	maxHandlesNum = 100
+	PG_USER       = getOrElse("PG_USER", "adicu")
+	PG_PASSWORD   = getOrElse("PG_PASSWORD", "")
+	PG_DB         = getOrElse("PG_DB", "")
+	PG_HOST       = getOrElse("PG_HOST", "localhost")
+	PG_PORT       = getOrElse("PG_PORT", "5432")
+	PG_SSL        = getOrElse("PG_SSL", "disable")
 )
 
 // getDate parses a filepath to get a date from the filename given the regex
@@ -50,16 +56,17 @@ func getOrElse(key, standard string) string {
 func dbConnect() *sql.DB {
 	db, err := sql.Open("postgres",
 		fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s",
-			getOrElse("PG_USER", "adicu"),
-			getOrElse("PG_PASSWORD", ""),
-			getOrElse("PG_DB", ""),
-			getOrElse("PG_HOST", "localhost"),
-			getOrElse("PG_PORT", "5432"),
-			getOrElse("PG_SSL", "disable"),
+			PG_USER,
+			PG_PASSWORD,
+			PG_DB,
+			PG_HOST,
+			PG_PORT,
+			PG_SSL,
 		))
 	if err != nil {
 		log.Fatalf("Error connecting to Postgres => %s", err.Error())
 	}
+	log.Printf("Databse connection made to %s", PG_DB)
 	return db
 }
 
@@ -118,11 +125,10 @@ func main() {
 	)
 	flag.Parse()
 
-	db := dbConnect()
-	defer db.Close()
-
 	// if all the files currently in the directory should be loaded
 	if *loadAll {
+		db := dbConnect()
+
 		log.Printf("Loading all files in directory, %s", *watchDir)
 		files, err := ioutil.ReadDir(*watchDir)
 		if err != nil {
@@ -135,6 +141,7 @@ func main() {
 		}
 
 		updateViews(db) // refresh the materialized views afterwards
+		db.Close()
 	}
 
 	// exits if flag turned on
@@ -159,14 +166,13 @@ func main() {
 	for {
 		select {
 		case event := <-watcher.Event:
-			if db.Ping() != nil {
-				log.Fatalf("DB cannot ping? => %s", err.Error())
-			}
+			db := dbConnect()
 			if event.IsCreate() && filenameRegex.MatchString(event.Name) {
 				time.Sleep(time.Duration(2 * time.Second))
 				handleFile(event.Name, db)
 				updateViews(db)
 			}
+			db.Close()
 		case err := <-watcher.Error:
 			log.Println(err)
 		}
