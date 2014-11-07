@@ -159,6 +159,9 @@ func main() {
 	for {
 		select {
 		case event := <-watcher.Event:
+			if db.Ping() != nil {
+				log.Fatalf("DB cannot ping? => %s", err.Error())
+			}
 			if event.IsCreate() && filenameRegex.MatchString(event.Name) {
 				time.Sleep(time.Duration(2 * time.Second))
 				handleFile(event.Name, db)
