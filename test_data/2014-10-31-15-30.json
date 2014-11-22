@@ -1,0 +1,112 @@
+{
+  "152" : {
+    "name" : "Lerner 3",
+    "client_count" : 60,
+    "parent_id" : 84
+  },
+  "131" : {
+    "name" : "Butler Library 3",
+    "client_count" : 180,
+    "parent_id" : 103
+  },
+  "155" : {
+    "name" : "JJ's Place",
+    "client_count" : 47,
+    "parent_id" : 75
+  },
+  "130" : {
+    "name" : "Butler Library 2",
+    "client_count" : 309,
+    "parent_id" : 103
+  },
+  "139" : {
+    "name" : "Lehman Library 2",
+    "client_count" : 24,
+    "parent_id" : 79
+  },
+  "154" : {
+    "name" : "Lerner 5",
+    "client_count" : 54,
+    "parent_id" : 84
+  },
+  "144" : {
+    "name" : "Starr East Asian Library",
+    "client_count" : 82,
+    "parent_id" : 62
+  },
+  "125" : {
+    "name" : "John Jay Dining Hall",
+    "client_count" : 12,
+    "parent_id" : 75
+  },
+  "23" : {
+    "name" : "Uris/Watson Library",
+    "client_count" : 275,
+    "parent_id" : 2
+  },
+  "133" : {
+    "name" : "Butler Library 5",
+    "client_count" : 63,
+    "parent_id" : 103
+  },
+  "147" : {
+    "name" : "Architectural and Fine Arts Library 1",
+    "client_count" : 9,
+    "parent_id" : 146
+  },
+  "149" : {
+    "name" : "Architectural and Fine Arts Library 3",
+    "client_count" : 62,
+    "parent_id" : 146
+  },
+  "85" : {
+    "name" : "Roone Arledge Auditorium",
+    "client_count" : 42,
+    "parent_id" : 84
+  },
+  "134" : {
+    "name" : "Butler Library 6",
+    "client_count" : 57,
+    "parent_id" : 103
+  },
+  "138" : {
+    "name" : "Butler Library stk",
+    "client_count" : 21,
+    "parent_id" : 103
+  },
+  "153" : {
+    "name" : "Lerner 4",
+    "client_count" : 91,
+    "parent_id" : 84
+  },
+  "145" : {
+    "name" : "Science and Engineering Library",
+    "client_count" : 61,
+    "parent_id" : 15
+  },
+  "151" : {
+    "name" : "Lerner 2",
+    "client_count" : 67,
+    "parent_id" : 84
+  },
+  "132" : {
+    "name" : "Butler Library 4",
+    "client_count" : 116,
+    "parent_id" : 103
+  },
+  "148" : {
+    "name" : "Architectural and Fine Arts Library 2",
+    "client_count" : 91,
+    "parent_id" : 146
+  },
+  "140" : {
+    "name" : "Lehman Library 3",
+    "client_count" : 145,
+    "parent_id" : 79
+  },
+  "150" : {
+    "name" : "Lerner 1",
+    "client_count" : 5,
+    "parent_id" : 84
+  }
+}
