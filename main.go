@@ -41,7 +41,11 @@ func refreshDBCredentials() {
 // getDate parses a filepath to get a date from the filename given the regex
 // declared in `filenameRegex`.
 func getDate(s string) (time.Time, error) {
-	return time.Parse(datetimeFormat, datetimeRegex.FindString(path.Base(s)))
+	tz, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.ParseInLocation(datetimeFormat, datetimeRegex.FindString(path.Base(s)), tz)
 }
 
 // getOrElse checks the specified environment variable, returns the value if found, otherwise

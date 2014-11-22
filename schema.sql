@@ -4,7 +4,7 @@ DROP TABLE density_data CASCADE;
 
 
 CREATE TABLE density_data (
-    dump_time       timestamp,
+    dump_time       timestamp with time zone,
     group_id        integer,
     group_name      text,
     parent_id       integer,
