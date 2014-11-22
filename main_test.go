@@ -9,7 +9,8 @@ var (
 	testFilename     = "2014-10-11-15-45.json"
 	testFilename2    = "test_data/2014-10-11-15-45.json"
 	testFilenameFail = "201-10-11-1-45.json"
-	expectedTime     = time.Date(2014, time.October, 11, 15, 45, 0, 0, &time.Location{})
+	tz, _            = time.LoadLocation("America/New_York")
+	expectedTime     = time.Date(2014, time.October, 11, 15, 45, 0, 0, tz)
 )
 
 func TestFilenameRegex(t *testing.T) {
