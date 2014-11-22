@@ -1,0 +1,9 @@
+#!bin/sh
+
+# Postgres connection
+export PG_DB=travis
+export PG_USER=postgres
+export PG_PASSWORD=postgres
+export PG_HOST=localhost
+export PG_PORT=5432
+
