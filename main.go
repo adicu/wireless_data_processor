@@ -170,7 +170,7 @@ func main() {
 	defer watcher.Close()
 
 	// start the file system watcher
-	if err = watcher.Watch(*watchDir); err != nil {
+	if err = watcher.WatchFlags(*watchDir, fsnotify.FSN_CREATE); err != nil {
 		log.Fatalf("Failed to start watching directory, %s => %s", *watchDir, err.Error())
 	}
 
@@ -179,7 +179,7 @@ func main() {
 		select {
 		case event := <-watcher.Event:
 			db := dbConnect()
-			if event.IsCreate() && filenameRegex.MatchString(event.Name) {
+			if filenameRegex.MatchString(event.Name) {
 				time.Sleep(time.Duration(2 * time.Second))
 				handleFile(event.Name, db)
 				updateViews(db)
