@@ -17,29 +17,36 @@ var parentNameLookup = map[int]string{
 	103: "Butler",
 	62:  "East Asian Library",
 	75:  "John Jay",
-	79:  "Lehman LIbrary",
+	79:  "Lehman Library",
 	84:  "Lerner",
-	15:  "Mudd",
+	15:  "Northwest Corner Building",
 	2:   "Uris",
-}
-
-// dumpFormat represents the datapoints provided for the wireless data.
-type dumpFormat struct {
-	DumpTime    time.Time
-	GroupID     int
-	GroupName   string `json:"name"`
-	ParentID    int    `json:"parent_id"`
-	ParentName  string
-	ClientCount int `json:"client_count"`
 }
 
 // dataset is an alias for an array of data dumps
 type dataset []dumpFormat
 
+// dumpFormat represents the datapoints provided for the wireless data.
+// Some fields are gathered from the dumped JSON files and others are configured
+// afterwards before storage.
+type dumpFormat struct {
+	DumpTime    time.Time
+	GroupID     int
+	ParentName  string
+	GroupName   string `json:"name"`
+	ParentID    int    `json:"parent_id"`
+	ClientCount int    `json:"client_count"`
+}
+
 // parseData unmarshals a byte array into an array of wireless data dumps.
 //
 // This is a little more complicated because the group ID is stored as the key to the
 // remainder of the data for the record.
+//
+// adds:
+// - a timestamp based on the filename
+// - a group ID based on the group's key in the JSON
+// - a parent name based on the parentNameLookup table
 func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
 	// marshal what data we can from the json
 	parsed := make(map[string]dumpFormat)
@@ -55,12 +62,10 @@ func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
 	)
 	// fill out the JSON with the group ID added
 	for id, d := range parsed {
-		var parsedInt int64
-		if parsedInt, err = strconv.ParseInt(id, 10, 64); err != nil {
+		if d.GroupID, err = strconv.Atoi(id); err != nil {
 			return []dumpFormat{}, fmt.Errorf("ERR: Failed to parse int, %s => %s", id, err.Error())
 		}
 
-		d.GroupID = int(parsedInt)
 		d.DumpTime = timestamp
 		if d.ParentName, exists = parentNameLookup[d.ParentID]; !exists {
 			log.Printf("WARN: no parent name for %d exists in group: %d", d.ParentID, d.GroupID)
@@ -95,6 +100,7 @@ func (data dataset) insert(db *sql.DB) error {
 	}
 	defer stmt.Close()
 
+	// Add all data from the set
 	for _, d := range data {
 		_, err = stmt.Exec(
 			d.DumpTime,
@@ -109,10 +115,12 @@ func (data dataset) insert(db *sql.DB) error {
 		}
 	}
 
+	// execute the transaction
 	if _, err = stmt.Exec(); err != nil {
 		return fmt.Errorf("Failed to execute bulk insert => %s", err.Error())
 	}
 
+	// commit the transaction if there's been no errors
 	if err = txn.Commit(); err != nil {
 		log.Printf("ERR: Failed to commit txn => %s", err.Error())
 		if err = txn.Rollback(); err != nil {
