@@ -27,8 +27,9 @@ var parentNameLookup = map[int]string{
 type dataset []dumpFormat
 
 // dumpFormat represents the datapoints provided for the wireless data.
-// Some fields are gathered from the dumped JSON files and others are configured
-// afterwards before storage.
+// DumpTime, GroupID, & ParentName are gathered from the dumped JSON file.
+// GroupName, ParentID, & ClientCount are configured based on the filename and
+// JSON format.
 type dumpFormat struct {
 	DumpTime    time.Time
 	GroupID     int
@@ -60,13 +61,14 @@ func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
 		err    error
 		exists bool
 	)
-	// fill out the JSON with the group ID added
+	// add all fields needed to the JSON
 	for id, d := range parsed {
 		if d.GroupID, err = strconv.Atoi(id); err != nil {
 			return []dumpFormat{}, fmt.Errorf("ERR: Failed to parse int, %s => %s", id, err.Error())
 		}
 
 		d.DumpTime = timestamp
+
 		if d.ParentName, exists = parentNameLookup[d.ParentID]; !exists {
 			log.Printf("WARN: no parent name for %d exists in group: %d", d.ParentID, d.GroupID)
 		}
@@ -80,15 +82,16 @@ func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
 // insert operates on a list of dumpFormat and inserts them to the provided Postgres
 // database.
 func (data dataset) insert(db *sql.DB) error {
-	txn, err := db.Begin()
+	transaction, err := db.Begin()
 	if err != nil {
 		return fmt.Errorf("Error starting PG txn => %s", err.Error())
 	}
 
-	// CopyIn used for fast insertions. Table followed by columns
-	stmt, err := txn.Prepare(pq.CopyIn(
-		"density_data",
-		"dump_time",
+	// PG's COPY FROM used for fast mass insertions. Syntax is table followed by columns.
+	// http://godoc.org/github.com/lib/pq#hdr-Bulk_imports
+	stmt, err := transaction.Prepare(pq.CopyIn(
+		"density_data", // table
+		"dump_time",    // columns.....
 		"group_id",
 		"group_name",
 		"parent_id",
@@ -121,9 +124,9 @@ func (data dataset) insert(db *sql.DB) error {
 	}
 
 	// commit the transaction if there's been no errors
-	if err = txn.Commit(); err != nil {
+	if err = transaction.Commit(); err != nil {
 		log.Printf("ERR: Failed to commit txn => %s", err.Error())
-		if err = txn.Rollback(); err != nil {
+		if err = transaction.Rollback(); err != nil {
 			log.Printf("ERR: Failed to rollback txn => %s", err.Error())
 		}
 	}

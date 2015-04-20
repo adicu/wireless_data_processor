@@ -17,8 +17,9 @@ import (
 
 var (
 	// example: 2014-10-31-15-15.json
-	filenameRegex     = regexp.MustCompile(`(\d{4}(-\d{2}){4})\.json$`)
-	datetimeRegex     = regexp.MustCompile(`([\d-]*)`)
+	filenameRegex = regexp.MustCompile(`(\d{4}(-\d{2}){4})\.json$`)
+	datetimeRegex = regexp.MustCompile(`([\d-]*)`)
+	// datetimeFormat is the timestamp format used in the filenames.
 	datetimeFormat    = "2006-01-02-15-04"
 	NY                *time.Location
 	materializedViews = []string{
@@ -131,7 +132,7 @@ func updateViews(db *sql.DB) {
 		}
 	}
 
-	if nil == txn.Commit() {
+	if txn.Commit() == nil {
 		log.Println("materialized views updated")
 	}
 }

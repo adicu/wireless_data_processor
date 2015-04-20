@@ -69,21 +69,26 @@ var expectedData = []dumpFormat{
 	},
 }
 
+// TestParseData parses the raw data in `testingData` and confirms that it
+// correctly configures all data fields.
 func TestParseData(t *testing.T) {
 	data, err := parseData(time.Time{}, []byte(testingData))
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	// make sure that the parsed data is in the expected data
+	expected := func(d dumpFormat, t *testing.T) {
+		for _, e := range expectedData {
+			if d == e {
+				return
+			}
+		}
+		t.Errorf("No match in expected data for %#v\n", d)
+	}
+
 	// n^2 because n == 4....
 	for _, d := range data {
-		go func(d dumpFormat, t *testing.T) {
-			for _, e := range expectedData {
-				if d == e {
-					return
-				}
-			}
-			t.Errorf("No match in expected data for %#v\n", d)
-		}(d, t)
+		expected(d, t)
 	}
 }
