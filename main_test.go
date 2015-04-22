@@ -40,6 +40,6 @@ func TestPullDate(t *testing.T) {
 
 	_, err = getDate(testFilenameFail)
 	if err == nil {
-		t.Error("Improper date parsed")
+		t.Error("Improper date parsed without failure")
 	}
 }
