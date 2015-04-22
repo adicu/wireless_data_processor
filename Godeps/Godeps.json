@@ -1,0 +1,15 @@
+{
+	"ImportPath": "github.com/adicu/wireless_data_processor",
+	"GoVersion": "go1.3.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/howeyc/fsnotify",
+			"Comment": "v0.9.0-11-g6b1ef89",
+			"Rev": "6b1ef893dc11e0447abda6da20a5203481878dda"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Rev": "3c5c5bd6383b42aec97b5aa39fba2cddd35aea36"
+		}
+	]
+}
