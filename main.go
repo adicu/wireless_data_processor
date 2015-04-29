@@ -66,7 +66,7 @@ func getOrElse(key, standard string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
 	} else if standard == "" {
-		log.Fatalf("The environment variable, %s, must be set", key)
+		log.Fatalf("ERROR: The environment variable, %s, must be set", key)
 	}
 	return standard
 }
@@ -84,7 +84,7 @@ func dbConnect() *sql.DB {
 			PG_SSL,
 		))
 	if err != nil {
-		log.Fatalf("Error connecting to Postgres => %s", err.Error())
+		log.Fatalf("ERROR: Error connecting to Postgres => %s", err.Error())
 	}
 	log.Printf("PQ Database connection made to %s", PG_DB)
 	return db
@@ -97,24 +97,24 @@ func handleFile(filename string, db *sql.DB) {
 	log.Printf("Processing, %s", filename)
 	fileContents, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Printf("Failed to read in file, %s => %s", filename, err.Error())
+		log.Printf("ERROR: Failed to read in file, %s => %s", filename, err.Error())
 		return
 	}
 
 	tm, err := getDate(filename)
 	if err != nil {
-		log.Printf("Failed to parse date from file, %s, ignored.", filename)
+		log.Printf("ERROR: Failed to parse date from file, %s, ignored.", filename)
 		return
 	}
 
 	data, err := parseData(tm, fileContents)
 	if err != nil {
-		log.Printf("Failed to parse data from %s => %s", filename, err.Error())
+		log.Printf("ERROR: Failed to parse data from %s => %s", filename, err.Error())
 		return
 	}
 
 	if err = dataset(data).insert(db); err != nil {
-		log.Printf("Failed to insert data from, %s => %s", filename, err.Error())
+		log.Printf("ERROR: Failed to insert data from, %s => %s", filename, err.Error())
 	}
 }
 
@@ -122,21 +122,21 @@ func handleFile(filename string, db *sql.DB) {
 func updateViews(db *sql.DB) {
 	txn, err := db.Begin()
 	if err != nil {
-		log.Printf("ERR: failed to start pq txn for materialized view updates => %s", err.Error())
+		log.Printf("ERROR: failed to start pq txn for materialized view updates => %s", err.Error())
 		return
 	}
 
 	for _, view := range materializedViews {
 		if _, err = txn.Exec(fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", view)); err != nil {
-			log.Printf("Failed to update materialized view, %s => %s", view, err.Error())
+			log.Printf("ERROR: Failed to update materialized view, %s => %s", view, err.Error())
 		}
 	}
 
 	err = txn.Commit()
 	if err != nil {
-		log.Printf("Failed to commit transaction => {%s}", err)
+		log.Printf("ERROR: Failed to commit transaction => {%s}", err)
 	} else {
-		log.Println("materialized views updated")
+		log.Println("ERROR: materialized views updated")
 	}
 }
 
@@ -148,7 +148,7 @@ func LoadAllFiles(watchDir string) {
 
 	files, err := ioutil.ReadDir(watchDir)
 	if err != nil {
-		log.Fatalf("Failed to read in directory info => %s", err.Error())
+		log.Fatalf("ERROR: Failed to read in directory info => %s", err.Error())
 	}
 
 	// handle every data file
@@ -163,13 +163,13 @@ func watchDirectory(watchDir string) {
 	// start watching for new files
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal("Failed to instantiate file watcher")
+		log.Fatal("ERROR: Failed to instantiate file watcher")
 	}
 	defer watcher.Close()
 
 	// start the file system watcher
 	if err = watcher.WatchFlags(watchDir, fsnotify.FSN_CREATE); err != nil {
-		log.Fatalf("Failed to start watching directory, %s => %s", watchDir, err.Error())
+		log.Fatalf("ERROR: Failed to start watching directory, %s => %s", watchDir, err.Error())
 	}
 
 	// wait for any new files to be added, then process them
@@ -188,7 +188,7 @@ func watchDirectory(watchDir string) {
 			}
 			db.Close()
 		case err := <-watcher.Error:
-			log.Println(err)
+			log.Printf("ERROR: fsnotify err channel => {%s}", err)
 		}
 	}
 }
