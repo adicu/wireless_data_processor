@@ -16,17 +16,35 @@ func init() {
 	os.Setenv("PG_SSL", "disable")
 }
 
+// struct w/ regular encoding
 var data1 = `{
     "name" : "Lerner 3",
     "client_count" : 70,
     "parent_id" : 84
 }`
 
+// struct w/ string-encoded numbers
 var data2 = `{
     "name" : "Lerner 3",
     "client_count" : "70",
     "parent_id" : "84"
 }`
+
+// TestUnmarshalData tests that we now properly unmarshal both forms
+// fo the data.
+func TestUnmarshalData(t *testing.T) {
+	var d dumpFormat
+
+	err := json.Unmarshal([]byte(data1), &d)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal data with integers => {%s}", err)
+	}
+
+	err = json.Unmarshal([]byte(data2), &d)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal data with strings => {%s}", err)
+	}
+}
 
 var testingData1 = `{
   "152" : {
@@ -103,20 +121,6 @@ var expectedData = []dumpFormat{
 		ParentID:    103,
 		ParentName:  "Butler",
 	},
-}
-
-func TestUnmarshalData(t *testing.T) {
-	var d dumpFormat
-
-	err := json.Unmarshal([]byte(data1), &d)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal data with integers => {%s}", err)
-	}
-
-	err = json.Unmarshal([]byte(data2), &d)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal data with strings => {%s}", err)
-	}
 }
 
 // TestParseData parses the raw data in `testingData` and confirms that it
