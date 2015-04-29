@@ -22,7 +22,7 @@ send_email () {
     local LINE=$1
     echo "LINE: $LINE"
 
-    curl -s --user "$MAILGUN_KEY" \
+    curl -s --user "api:$MAILGUN_KEY" \
         "$DOMAIN/messages" \
         -F from="$FROM_EMAIL" \
         -F to="$DEST_EMAIL" \
