@@ -70,7 +70,7 @@ func parseData(timestamp time.Time, datafile []byte) (dataset, error) {
 		d.DumpTime = timestamp
 
 		if d.ParentName, exists = parentNameLookup[d.ParentID]; !exists {
-			log.Printf("WARN: no parent name for %d exists in group: %d", d.ParentID, d.GroupID)
+			log.Printf("ERROR: no parent name for %d exists in group: %d", d.ParentID, d.GroupID)
 		}
 		data[i] = d
 		i++
@@ -125,9 +125,9 @@ func (data dataset) insert(db *sql.DB) error {
 
 	// commit the transaction if there's been no errors
 	if err = transaction.Commit(); err != nil {
-		log.Printf("ERR: Failed to commit txn => %s", err.Error())
+		log.Printf("ERROR: Failed to commit txn => %s", err.Error())
 		if err = transaction.Rollback(); err != nil {
-			log.Printf("ERR: Failed to rollback txn => %s", err.Error())
+			log.Printf("ERROR: Failed to rollback txn => %s", err.Error())
 		}
 	}
 	return nil
