@@ -31,7 +31,7 @@ var data2 = `{
 }`
 
 // TestUnmarshalData tests that we now properly unmarshal both forms
-// fo the data.
+// of the data.
 func TestUnmarshalData(t *testing.T) {
 	var d dumpFormat
 
