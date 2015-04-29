@@ -135,8 +135,6 @@ func updateViews(db *sql.DB) {
 	err = txn.Commit()
 	if err != nil {
 		log.Printf("ERROR: Failed to commit transaction => {%s}", err)
-	} else {
-		log.Println("ERROR: materialized views updated")
 	}
 }
 
