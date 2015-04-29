@@ -34,9 +34,71 @@ type dumpFormat struct {
 	DumpTime    time.Time
 	GroupID     int
 	ParentName  string
-	GroupName   string `json:"name"`
-	ParentID    int    `json:"parent_id"`
-	ClientCount int    `json:"client_count"`
+	GroupName   string
+	ParentID    int
+	ClientCount int
+}
+
+// UnmarshalJSON inmplements JSON's Unmarshaler interface.
+// This allows us to deal with inconsistent number encoding in the 'parent_id' and
+// 'client_count' fields.
+func (df *dumpFormat) UnmarshalJSON(data []byte) error {
+	// pull data into a generic map
+	raw := make(map[string]interface{})
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return fmt.Errorf("Failed to unpack data into map => {%s}", err)
+	}
+
+	// get name and insure it's a string
+	name, exists := raw["name"]
+	if !exists {
+		return fmt.Errorf("key 'name' missing ")
+	}
+	switch n := name.(type) {
+	case string:
+		df.GroupName = n
+	default:
+		return fmt.Errorf("Value in 'name' should be string")
+	}
+
+	// get parent_id and take either int or string
+	pID, exists := raw["parent_id"]
+	if !exists {
+		return fmt.Errorf("key 'parent_id' missing ")
+	}
+	switch p := pID.(type) {
+	case string:
+		i, err := strconv.Atoi(p)
+		if err != nil {
+			return fmt.Errorf("Failed to convert 'parent_id', %s, to int => {%s}", p, err)
+		}
+		df.ParentID = i
+	case float64:
+		df.ParentID = int(p)
+	default:
+		return fmt.Errorf("Value in 'parent_id', %#v, should be int or string", p)
+	}
+
+	// get client_count and take either int or string
+	cc, exists := raw["client_count"]
+	if !exists {
+		return fmt.Errorf("key 'client_count' missing ")
+	}
+	switch c := cc.(type) {
+	case string:
+		i, err := strconv.Atoi(c)
+		if err != nil {
+			return fmt.Errorf("Failed to convert 'client_count', %s, to int => {%s}", c, err)
+		}
+		df.ClientCount = i
+	case float64:
+		df.ClientCount = int(c)
+	default:
+		return fmt.Errorf("Value in 'client_count' should be int or string")
+	}
+
+	return nil
 }
 
 // parseData unmarshals a byte array into an array of wireless data dumps.
