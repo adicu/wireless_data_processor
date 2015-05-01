@@ -1,16 +1,15 @@
 #!/bin/bash
 
-
 DEST_EMAIL="infrastructure@adicu.com"
-
-FROM_EMAIL="Wireless Processor <mailgun@sandbox8f6daca8215748e5b1a565fc428b7632.mailgun.org>"
-DOMAIN="https://api.mailgun.net/v3/sandbox8f6daca8215748e5b1a565fc428b7632.mailgun.org"
-
+FROM_EMAIL="Wireless Processor <mailgun@mg.adicu.com>"
+DOMAIN="https://api.mailgun.net/v3/mg.adicu.com"
 SUBJECT="[logging] ERROR from wireless data processor"
 
-
-
-if [ "$#" -ne 1 ]; then
+if [ "$MAILGUN_KEY" = "" ]
+then
+    echo "MAILGUN_KEY must be set in the environment"
+    exit 1
+elif [ "$#" -ne 1 ]; then
     echo "Must pass name of a log file to monitor"
     exit 1
 fi
