@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/howeyc/fsnotify"
-	_ "github.com/lib/pq"
+	"github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/howeyc/fsnotify"
+	_ "github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/lib/pq"
 )
 
 var (
@@ -107,7 +107,7 @@ func handleFile(filename, archiveDir string, db *sql.DB) error {
 
 	tm, err := getDate(filename)
 	if err != nil {
-		return fmt.Errorf("ERROR: Failed to parse date from file, %s, ignored.", filename)
+		return fmt.Errorf("ERROR: Failed to parse date from file, %s, ignored", filename)
 	}
 
 	data, err := parseData(tm, fileContents)

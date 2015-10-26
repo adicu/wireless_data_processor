@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lib/pq"
+	"github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/lib/pq"
 )
 
 // lookup table for buildings that we have in our system.
