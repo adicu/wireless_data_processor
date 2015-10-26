@@ -2,7 +2,7 @@ package hstore
 
 import (
 	"database/sql"
-	_ "github.com/lib/pq"
+	_ "github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/lib/pq"
 	"os"
 	"testing"
 )

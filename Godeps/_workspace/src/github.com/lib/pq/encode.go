@@ -5,7 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/hex"
 	"fmt"
-	"github.com/lib/pq/oid"
+	"github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/lib/pq/oid"
 	"math"
 	"strconv"
 	"strings"

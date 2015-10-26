@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"database/sql"
 	"database/sql/driver"
-	"github.com/lib/pq/oid"
+	"github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/lib/pq/oid"
 	"io"
 	"math/rand"
 	"net"

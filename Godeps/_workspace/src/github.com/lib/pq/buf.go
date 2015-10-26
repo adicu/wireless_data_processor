@@ -3,7 +3,7 @@ package pq
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/lib/pq/oid"
+	"github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/lib/pq/oid"
 )
 
 type readBuf []byte

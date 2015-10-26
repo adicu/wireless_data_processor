@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/howeyc/fsnotify"
-	_ "github.com/lib/pq"
+	"github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/howeyc/fsnotify"
+	_ "github.com/adicu/wireless_data_processor/Godeps/_workspace/src/github.com/lib/pq"
 )
 
 var (
@@ -29,6 +29,11 @@ var (
 		"month_window",
 	}
 	PG_USER, PG_PASSWORD, PG_DB, PG_HOST, PG_PORT, PG_SSL string
+
+	watchDir     = flag.String("dir", ".", "directory to watch for new files")
+	loadAll      = flag.Bool("all", false, "load all dump file in the directory")
+	archiveDir   = flag.String("archive", "", "directory where archived stats are looked for and moved to")
+	keepWatching = flag.Bool("watch", true, "continue to watch for new files in the directory")
 )
 
 // init is called on startup
@@ -93,29 +98,33 @@ func dbConnect() *sql.DB {
 // handleFile processes new files
 //
 // The file is read into memory, parsed then inserted to the database.
-func handleFile(filename string, db *sql.DB) {
+func handleFile(filename, archiveDir string, db *sql.DB) error {
 	log.Printf("Processing, %s", filename)
 	fileContents, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Printf("ERROR: Failed to read in file, %s => %s", filename, err.Error())
-		return
+		return fmt.Errorf("ERROR: Failed to read in file, %s => %s", filename, err.Error())
 	}
 
 	tm, err := getDate(filename)
 	if err != nil {
-		log.Printf("ERROR: Failed to parse date from file, %s, ignored.", filename)
-		return
+		return fmt.Errorf("ERROR: Failed to parse date from file, %s, ignored", filename)
 	}
 
 	data, err := parseData(tm, fileContents)
 	if err != nil {
-		log.Printf("ERROR: Failed to parse data from %s => %s", filename, err.Error())
-		return
+		return fmt.Errorf("ERROR: Failed to parse data from %s => %s", filename, err.Error())
 	}
 
 	if err = dataset(data).insert(db); err != nil {
-		log.Printf("ERROR: Failed to insert data from, %s => %s", filename, err.Error())
+		return fmt.Errorf("ERROR: Failed to insert data from, %s => %s", filename, err.Error())
 	}
+
+	newFilename := path.Join(archiveDir, path.Base(filename))
+	if err := os.Rename(filename, newFilename); err != nil {
+		return fmt.Errorf("ERROR: failed to move file to archiveDir, %s => %s", archiveDir, err.Error())
+	}
+
+	return nil
 }
 
 // Update the materialized views listed in `materializedViews`
@@ -138,26 +147,28 @@ func updateViews(db *sql.DB) {
 	}
 }
 
-func LoadAllFiles(watchDir string) {
-	log.Printf("Loading all files in directory, %s", watchDir)
+func LoadAllFiles(archiveDir string) {
+	log.Printf("Loading all files in directory, %s", archiveDir)
 
 	db := dbConnect()
 	defer db.Close()
 
-	files, err := ioutil.ReadDir(watchDir)
+	files, err := ioutil.ReadDir(archiveDir)
 	if err != nil {
 		log.Fatalf("ERROR: Failed to read in directory info => %s", err.Error())
 	}
 
 	// handle every data file
 	for _, f := range files {
-		handleFile(path.Join(watchDir, f.Name()), db)
+		if err := handleFile(f.Name(), archiveDir, db); err != nil {
+			log.Printf("Failed to handle file, %s: %s", f.Name(), err)
+		}
 	}
 
 	updateViews(db) // refresh the materialized views afterwards
 }
 
-func watchDirectory(watchDir string) {
+func watchDirectory(watchDir, archiveDir string) {
 	// start watching for new files
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -181,7 +192,9 @@ func watchDirectory(watchDir string) {
 				// otherwise we get a parsing error because it's incomplete.
 				time.Sleep(time.Duration(2 * time.Second))
 
-				handleFile(event.Name, db)
+				if err := handleFile(event.Name, archiveDir, db); err != nil {
+					log.Printf("Failed to handle file, %s: %s", event.Name, err)
+				}
 				updateViews(db)
 			}
 			db.Close()
@@ -195,21 +208,21 @@ func main() {
 	configure() // set up all configuration variables
 
 	// gather CLI configurations
-	var (
-		watchDir     = flag.String("dir", ".", "directory to watch for new files")
-		loadAll      = flag.Bool("all", false, "load all dump file in the directory")
-		keepWatching = flag.Bool("watch", true, "continue to watch for new files in the directory")
-	)
 	flag.Parse()
+
+	if *archiveDir == "" {
+		log.Printf("A directory for archived files must be provided.")
+		os.Exit(1)
+	}
 
 	// if all the files currently in the directory should be loaded
 	if *loadAll {
-		LoadAllFiles(*watchDir)
+		LoadAllFiles(*archiveDir)
 	}
 
 	// exits if flag turned on
 	if *keepWatching {
-		watchDirectory(*watchDir)
+		watchDirectory(*watchDir, *archiveDir)
 	}
 
 	// log because it's an unexpected answer
