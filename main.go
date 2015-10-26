@@ -160,9 +160,8 @@ func LoadAllFiles(archiveDir string) {
 
 	// handle every data file
 	for _, f := range files {
-		filename := path.Join(archiveDir, f.Name())
-		if err := handleFile(filename, archiveDir, db); err != nil {
-			log.Printf("Failed to handle file, %s: %s", filename, err)
+		if err := handleFile(f.Name(), archiveDir, db); err != nil {
+			log.Printf("Failed to handle file, %s: %s", f.Name(), err)
 		}
 	}
 
@@ -193,7 +192,9 @@ func watchDirectory(watchDir, archiveDir string) {
 				// otherwise we get a parsing error because it's incomplete.
 				time.Sleep(time.Duration(2 * time.Second))
 
-				handleFile(event.Name, archiveDir, db)
+				if err := handleFile(event.Name, archiveDir, db); err != nil {
+					log.Printf("Failed to handle file, %s: %s", event.Name, err)
+				}
 				updateViews(db)
 			}
 			db.Close()
@@ -210,7 +211,8 @@ func main() {
 	flag.Parse()
 
 	if *archiveDir == "" {
-		log.Fatalf("A directory for archived files must be provided.")
+		log.Printf("A directory for archived files must be provided.")
+		os.Exit(1)
 	}
 
 	// if all the files currently in the directory should be loaded
