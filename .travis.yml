@@ -5,7 +5,7 @@ addons:
 
 before_install:
   - go get golang.org/x/tools/cmd/vet
-  - go get github.com/golang/lint/golint
+  - go get golang.org/x/lint/golint
 
 install:
   - go get -d -v -t ./...
